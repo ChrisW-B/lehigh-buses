@@ -7,156 +7,54 @@ using System.Windows.Controls;
 using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
-using LehighBuses.Resources;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Collections.ObjectModel;
-using System.Windows.Media;
-using System.IO.IsolatedStorage;
 using System.Windows.Shapes;
-using Microsoft.Phone.Maps.Controls;
+using System.Windows.Media;
 using System.Device.Location;
+using System.IO.IsolatedStorage;
+using System.Collections.ObjectModel;
+using Microsoft.Phone.Maps.Controls;
+
 
 namespace LehighBuses
 {
-    public partial class MainPage : PhoneApplicationPage
+    public partial class FullMap : PhoneApplicationPage
     {
         #region variables
-        ProgressIndicator progGetData;
-        dynamic store = IsolatedStorageSettings.ApplicationSettings;
+        private bool errorSet;
+        private bool isCurrent;
+        private int locationSearchTimes;
+        
+
         private string currentLat;
         private string currentLon;
 
-        private bool isCurrent = true;
-        private int locationSearchTimes;
-
-        private bool errorSet;
+        dynamic store = IsolatedStorageSettings.ApplicationSettings;
 
         public ObservableCollection<Bus> buses { get; set; }
         public ObservableCollection<Depart> departures { get; set; }
         public ObservableCollection<Arrival> arrivals { get; set; }
         #endregion
 
-        public MainPage()
+        public FullMap()
         {
             InitializeComponent();
-
-            initializeCollections();
-            initializeProgressBar();
-            setTileColor();
-            getJson();
-            
-        }
-
-        //General Setup stuff
-        private void initializeProgressBar()
-        {
-            progGetData = new ProgressIndicator();
-            progGetData.Text = "Updating...";
-            progGetData.IsIndeterminate = true;
-            progGetData.IsVisible = false;
-        }
-        private void startProgGetData()
-        {
-            SystemTray.SetIsVisible(this, true);
-            SystemTray.SetOpacity(this, 0);
-            progGetData.IsVisible = true;
-            SystemTray.SetProgressIndicator(this, progGetData);
-        
-        }
-        private void initializeCollections()
-        {
-            buses = new ObservableCollection<Bus>();
-            departures = new ObservableCollection<Depart>();
-            arrivals = new ObservableCollection<Arrival>();
-        }
-        private void setTileColor()
-        {
-            ShellTile tile = ShellTile.ActiveTiles.ElementAtOrDefault(0);
-            IconicTileData TileData = new IconicTileData
+            if (store.Contains("buses"))
             {
-                BackgroundColor = HexToColor("#FF4C280F")
-            };
-            tile.Update(TileData);
-        }
-
-        //Bus Data
-        private void getJson()
-        {
-            startProgGetData();
-            WebClient webClient = new WebClient();
-            webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(webClient_DownloadStringCompleted);
-            webClient.DownloadStringAsync(new Uri("http://bus.lehigh.edu/scripts/routestoptimes.php?format=json"));
-        }
-        private void webClient_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
-        {
-            if (!e.Cancelled && e.Error == null && e.Result != null)
-            {
-                locationSearchTimes = 0;
-
-                setData(e.Result);
-                findLocation();
-                setupMap();
+                buses = store["buses"];
             }
-        }
-        private void setData(string e)
-        {
-            //Clear out lists from last time
-            buses = new ObservableCollection<Bus>();
-            departures = new ObservableCollection<Depart>();
-            arrivals = new ObservableCollection<Arrival>();
-
-
-            buses.Clear();
-            departures.Clear();
-            arrivals.Clear();
-
-            //Convert to a JObject
-            JObject o = JObject.Parse(e);
-
-            for (int x = 1; x < 5; x++)
-            {
-                departures = new ObservableCollection<Depart>();
-                arrivals = new ObservableCollection<Arrival>();
-
-                //Get Route Name
-                string routeName = o[x.ToString()]["name"].ToString();
-
-
-                //Get departure times
-                dynamic[] departArray = o[x.ToString()]["schedule"].ToArray();
-                for (int y = 0; y < departArray.Length; y++)
-                {
-                    departures.Add(new Depart { leave = o[x.ToString()]["schedule"].ElementAtOrDefault(y).First().ToString() });
-                }
-
-                //get arrival times
-                dynamic[] arriveArray = o[x.ToString()]["stops"].ToArray();
-                for (int z = 0; z < arriveArray.Length; z++)
-                {
-                    string idString = (o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["id"].ToString());
-                    int id = Convert.ToInt32(idString);
-                    string arrivalName = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["name"].ToString();
-                    string lat = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["lat"].ToString();
-                    string lon = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["long"].ToString();
-                    string arrivalTime = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["arrival"].ToString();
-
-                    string concat = arrivalName + ":  " + arrivalTime;
-
-                    arrivals.Add(new Arrival { id = id, arrival = arrivalTime, lat = lat, lon = lon, name = arrivalName, concat = concat });
-                }
-                buses.Add(new Bus { name = routeName, departures = departures, arrivals = arrivals });
-            }
-            BusRoutes.ItemsSource = buses;
-            progGetData.IsVisible = false;
+            isCurrent = true;
+            setupMap();
         }
 
-        //Map Stuff
+        //Map stuff
         private void setupMap()
         {
+            locationSearchTimes = 0;
+            errorSet = false;
+
+            findLocation();
             busMap.Center = new GeoCoordinate(Convert.ToDouble(currentLat), Convert.ToDouble(currentLon));
             busMap.ZoomLevel = 15;
-            busMap.IsEnabled = false;
             addLocations();
         }
         private void addLocations()
@@ -207,7 +105,7 @@ namespace LehighBuses
 
             // Add the MapLayer to the Map.
             busMap.Layers.Add(myLocationLayer);
-        
+
         }
         private void plotPoint(double lat, double lon, string name)
         {
@@ -329,45 +227,17 @@ namespace LehighBuses
             }
         }
 
-        //Buttons and clicks and other reactions to user input
-        private void overlayBox_Tap(object sender, System.Windows.Input.GestureEventArgs e)
+        void busMap_Hold(object sender, System.Windows.Input.GestureEventArgs e)
         {
-            store["buses"] = buses;
-            NavigationService.Navigate(new Uri("/FullMap.xaml", UriKind.Relative));
-        }
-        private void busMap_Tap(object sender, System.Windows.Input.GestureEventArgs e)
-        {
-            store["buses"] = buses;
-            NavigationService.Navigate(new Uri("/FullMap.xaml", UriKind.Relative));
-        }
-        private void refresh_Click(object sender, EventArgs e)
-        {
-            getJson();
-        }
-        private void title_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            switch (((Panorama)sender).SelectedIndex)
+            if (busMap.CartographicMode == MapCartographicMode.Hybrid)
             {
-                case 0:
-                    ApplicationBar.Mode = ApplicationBarMode.Default;
-                    break;
-                case 1:
-                    //setupMap();
-                    ApplicationBar.Mode = ApplicationBarMode.Minimized;
-                    break;
+                busMap.CartographicMode = MapCartographicMode.Road;
             }
-
+            else if (busMap.CartographicMode == MapCartographicMode.Road)
+            {
+                busMap.CartographicMode = MapCartographicMode.Hybrid;
+            }
         }
 
-        //Convert colors
-        public Color HexToColor(string hex)
-        {
-            return Color.FromArgb(
-                Convert.ToByte(hex.Substring(1, 2), 16),
-                Convert.ToByte(hex.Substring(3, 2), 16),
-                Convert.ToByte(hex.Substring(5, 2), 16),
-                Convert.ToByte(hex.Substring(7, 2), 16)
-                );
-        } 
     }
 }

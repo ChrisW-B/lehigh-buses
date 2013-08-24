@@ -21,7 +21,7 @@ xmlns:maps="clr-namespace:Microsoft.Phone.Maps.Controls;assembly=Microsoft.Phone
         </Grid.RowDefinitions>
 
 
-        <phone:Panorama Name="title" Title="lehigh buses" Foreground="White" >
+        <phone:Panorama Name="title" Title="lehigh buses" Foreground="White" SelectionChanged="title_SelectionChanged">
 
             <!--Schedule-->
             <phone:PanoramaItem Header="schedule">
@@ -62,12 +62,11 @@ xmlns:maps="clr-namespace:Microsoft.Phone.Maps.Controls;assembly=Microsoft.Phone
             <phone:PanoramaItem Header="map">
                 <Grid>
                     <Grid Name="overlay">
-                        <Rectangle  Opacity=".3" Name="overlayBox"  Fill="Black" Tap="overlayBox_Tap"/>
+                        <Rectangle  Opacity=".3" Name="overlayBox"  Fill="Black" Tap="overlayBox_Tap" Height="403" VerticalAlignment="Top"/>
                     </Grid>
                     <Grid Name="map">
-                        <maps:Map Name="busMap" Tap="busMap_Tap"></maps:Map>
+                        <maps:Map Name="busMap" Tap="busMap_Tap" Height="403" VerticalAlignment="Top"/>
                     </Grid>
-
                 </Grid>
             </phone:PanoramaItem>
 

@@ -202,8 +202,8 @@ namespace LehighBuses
             //Create a shape
             Polygon triangle = new Polygon();
             triangle.Points.Add((new Point(0, 0)));
-            triangle.Points.Add((new Point(0, 40)));
-            triangle.Points.Add((new Point(20, 40)));
+            triangle.Points.Add((new Point(0, 60)));
+            triangle.Points.Add((new Point(20, 60)));
             triangle.Points.Add((new Point(20, 20)));
             ScaleTransform flip = new ScaleTransform();
             flip.ScaleY = -1;
@@ -213,18 +213,22 @@ namespace LehighBuses
             if (name.Contains("Mountaintop"))
             {
                 triangle.Fill = new SolidColorBrush(Colors.Blue);
+                triangle.Height = 50;
             }
             else if (name.Contains("Saucon"))
             {
                 triangle.Fill = new SolidColorBrush(Colors.Red);
+                triangle.Height = 40;
             }
             else if (name.Contains("T.R.A.C.S."))
             {
                 triangle.Fill = new SolidColorBrush(Colors.Green);
+                triangle.Height = 30;
             }
             else if (name.Contains("Athletics"))
             {
                 triangle.Fill = new SolidColorBrush(Colors.Black);
+                triangle.Height = 30;
             }
             else
             {

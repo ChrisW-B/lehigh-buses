@@ -5,55 +5,82 @@
     xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
     xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:maps="clr-namespace:Microsoft.Phone.Maps.Controls;assembly=Microsoft.Phone.Maps"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     SupportedOrientations="Portrait" Orientation="Portrait"
-    shell:SystemTray.IsVisible="True" Background="#FF4C280F" Foreground="White">
+    shell:SystemTray.IsVisible="True" Background="#FF4C280F" Foreground="White" shell:SystemTray.ForegroundColor="LightGray">
 
     <Grid x:Name="LayoutRoot" Background="#FF4C280F">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel x:Name="TitlePanel" Grid.Row="0" Margin="12,17,0,28">
-            <TextBlock Text="LEHIGH BUSES" Style="{StaticResource PhoneTextNormalStyle}" Margin="12,0" Foreground="White"/>
-            <TextBlock Text="schedule" Margin="9,-7,0,0" Style="{StaticResource PhoneTextTitle1Style}" Foreground="White"/>
-        </StackPanel>
 
-        <!--ContentPanel - place additional content here-->
-        <Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
-            <ScrollViewer>
-                <ItemsControl Name="BusRoutes" ItemsSource="{Binding buses}" HorizontalAlignment="Left" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" >
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Vertical">
-                                <TextBlock Name="RouteName" Text="{Binding name}" FontSize="45" FontWeight="ExtraLight" FontFamily="Segoe WP"></TextBlock>
-                                <TextBlock Text="Arrivals: " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" Padding="0,0,40,0" FontFamily="Segoe WP" FontSize="30" FontWeight="Light"></TextBlock>
-                                <ItemsControl Name="arrivalList" ItemsSource="{Binding arrivals}" Margin="0,0,20,0">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Name="arrivalTime" Text="{Binding concat}"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <StackPanel>
-                                    <TextBlock Text="Departures: " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" Padding="0,0,40,0" FontFamily="Segoe WP" FontSize="30" FontWeight="Light"></TextBlock>
-                                    <ItemsControl Name="departList" ItemsSource="{Binding departures}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Name="departTime" Text="{Binding leave}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" FontFamily="Segoe WP" Padding="0,0,260,0"/>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
+
+        <phone:Panorama Name="title" Title="lehigh buses" Foreground="White" >
+
+            <!--Schedule-->
+            <phone:PanoramaItem Header="schedule">
+                <Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
+                    <ScrollViewer Margin="0,0,0,72">
+                        <ItemsControl Name="BusRoutes" ItemsSource="{Binding buses}" HorizontalAlignment="Left" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Foreground="White" >
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock Name="RouteName" Text="{Binding name}" FontSize="45" FontWeight="ExtraLight" FontFamily="Segoe WP"></TextBlock>
+                                        <TextBlock Text="Arrivals: " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" Padding="0,0,40,0" FontFamily="Segoe WP" FontSize="30" FontWeight="Light"></TextBlock>
+                                        <ItemsControl Name="arrivalList" ItemsSource="{Binding arrivals}" Margin="0,0,20,0" Foreground="White">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Name="arrivalTime" Text="{Binding concat}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <StackPanel>
+                                            <TextBlock Text="Departures: " HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" Padding="0,0,40,0" FontFamily="Segoe WP" FontSize="30" FontWeight="Light"></TextBlock>
+                                            <ItemsControl Name="departList" ItemsSource="{Binding departures}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Foreground="White">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Name="departTime" Text="{Binding leave}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,20,0" FontFamily="Segoe WP" Padding="0,0,260,0"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </phone:PanoramaItem>
+
+            <!--maps-->
+            <phone:PanoramaItem Header="map">
+                <Grid>
+                    <Grid Name="overlay">
+                        <Rectangle  Opacity=".3" Name="overlayBox"  Fill="Black" Tap="overlayBox_Tap"/>
+                    </Grid>
+                    <Grid Name="map">
+                        <maps:Map Name="busMap" Tap="busMap_Tap"></maps:Map>
+                    </Grid>
+
+                </Grid>
+            </phone:PanoramaItem>
+
+        </phone:Panorama>
     </Grid>
+
+
+    <phone:PhoneApplicationPage.ApplicationBar>
+        <shell:ApplicationBar IsVisible="True"  IsMenuEnabled="True" Mode="Default"  Opacity="0.8" >
+
+            <shell:ApplicationBarIconButton IconUri="/Images/refresh.png" Text="refresh" Click="refresh_Click"/>
+
+        </shell:ApplicationBar>
+    </phone:PhoneApplicationPage.ApplicationBar>
 
 </phone:PhoneApplicationPage>

@@ -8,34 +8,119 @@ using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using LehighBuses.Resources;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.ObjectModel;
 
 namespace LehighBuses
 {
     public partial class MainPage : PhoneApplicationPage
     {
-        // Constructor
+
+
         public MainPage()
         {
             InitializeComponent();
 
-            // Sample code to localize the ApplicationBar
-            //BuildLocalizedApplicationBar();
+
+            buses = new ObservableCollection<Bus>();
+            departures = new ObservableCollection<Depart>();
+            arrivals = new ObservableCollection<Arrival>();
+
+            getJson();
         }
 
-        // Sample code for building a localized ApplicationBar
-        //private void BuildLocalizedApplicationBar()
-        //{
-        //    // Set the page's ApplicationBar to a new instance of ApplicationBar.
-        //    ApplicationBar = new ApplicationBar();
+        public ObservableCollection<Bus> buses { get; set; }
+        public ObservableCollection<Depart> departures { get; set; }
+        public ObservableCollection<Arrival> arrivals { get; set; }
 
-        //    // Create a new button and set the text value to the localized string from AppResources.
-        //    ApplicationBarIconButton appBarButton = new ApplicationBarIconButton(new Uri("/Assets/AppBar/appbar.add.rest.png", UriKind.Relative));
-        //    appBarButton.Text = AppResources.AppBarButtonText;
-        //    ApplicationBar.Buttons.Add(appBarButton);
+        public class Bus
+        {
+            public string name { get; set; }
+            public ObservableCollection<Depart> departures { get; set; }
+            public ObservableCollection<Arrival> arrivals { get; set; }
 
-        //    // Create a new menu item with the localized string from AppResources.
-        //    ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
-        //    ApplicationBar.MenuItems.Add(appBarMenuItem);
-        //}
+        }
+
+        public class Depart
+        {
+            public string leave { get; set; }
+        }
+
+        public class Arrival
+        {
+            public int id { get; set; }
+            public string name { get; set; }
+            public string lat { get; set; }
+            public string lon { get; set; }
+            public string arrival { get; set; }
+            public string concat { get; set; }
+        }
+
+
+
+        private void getJson()
+        {
+           
+            WebClient webClient = new WebClient();
+            webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(webClient_DownloadStringCompleted);
+            webClient.DownloadStringAsync(new Uri("http://bus.lehigh.edu/scripts/routestoptimes.php?format=json"));
+        }
+
+        private void webClient_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        {
+            if (!e.Cancelled && e.Error == null && e.Result != null)
+            {
+                //Clear out lists from last time
+                buses = new ObservableCollection<Bus>();
+                departures = new ObservableCollection<Depart>();
+                arrivals = new ObservableCollection<Arrival>();
+                
+
+                buses.Clear();
+                departures.Clear();
+                arrivals.Clear();
+
+                //Convert to a JObject
+                JObject o = JObject.Parse(e.Result);
+
+                for (int x = 1; x < 5; x++)
+                {
+                    departures = new ObservableCollection<Depart>();
+                    arrivals = new ObservableCollection<Arrival>();
+
+                    //Get Route Name
+                    string routeName = o[x.ToString()]["name"].ToString();
+
+
+                    //Get departure times
+                    dynamic[] departArray = o[x.ToString()]["schedule"].ToArray();
+                    for (int y = 0; y < departArray.Length; y++)
+                    {
+                        departures.Add(new Depart { leave = o[x.ToString()]["schedule"].ElementAtOrDefault(y).First().ToString() });
+                    }
+
+                    //get arrival times
+                    dynamic[] arriveArray = o[x.ToString()]["stops"].ToArray();
+                    for (int z = 0; z < arriveArray.Length; z++)
+                    {
+                        string idString = (o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["id"].ToString());
+                        int id = Convert.ToInt32(idString);
+                        string arrivalName = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["name"].ToString();
+                        string lat = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["lat"].ToString();
+                        string lon = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["long"].ToString();
+                        string arrivalTime = o[x.ToString()]["stops"].ElementAtOrDefault(z).First()["arrival"].ToString();
+
+                        string concat = arrivalName + ":  " + arrivalTime;
+
+                        arrivals.Add(new Arrival { id = id, arrival = arrivalTime, lat = lat, lon = lon, name = arrivalName, concat= concat });
+                    }
+                    buses.Add(new Bus { name = routeName, departures = departures, arrivals = arrivals });
+                }
+                BusRoutes.ItemsSource = buses;
+            }
+        }
+
+        
     }
 }

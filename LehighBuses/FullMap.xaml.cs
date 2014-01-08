@@ -20,9 +20,7 @@ namespace LehighBuses
     public partial class FullMap : PhoneApplicationPage
     {
         #region variables
-        private bool errorSet;
         private bool isCurrent;
-        private int locationSearchTimes;
 
         MapOverlay myLocationOverlay;
         MapLayer myLocationLayer;
@@ -51,9 +49,6 @@ namespace LehighBuses
         //Map stuff
         private void setupMap()
         {
-            locationSearchTimes = 0;
-            errorSet = false;
-
             findLocation();
             busMap.Center = new GeoCoordinate(Convert.ToDouble(currentLat), Convert.ToDouble(currentLon));
             busMap.ZoomLevel = 15;
@@ -194,7 +189,6 @@ namespace LehighBuses
                         var getLocation = new getLocation();
                         if (getLocation.getLat() != null && getLocation.getLat() != "NA")
                         {
-                            errorSet = false;
                             //Set long and lat
                             this.currentLat = getLocation.getLat();
                             this.currentLon = getLocation.getLong();

@@ -32,19 +32,18 @@ namespace LehighBuses
         MapLayer myLocationLayer;
 
         private bool isCurrent = true;
-        private int locationSearchTimes;
-
-        private bool errorSet;
 
         public ObservableCollection<Bus> buses { get; set; }
         public ObservableCollection<Depart> departures { get; set; }
         public ObservableCollection<Arrival> arrivals { get; set; }
         #endregion
 
+        
+
         public MainPage()
         {
             InitializeComponent();
-
+            ApplicationBar.StateChanged += ApplicationBar_StateChanged;
             initializeCollections();
             initializeProgressBar();
             setTileColor();
@@ -65,6 +64,21 @@ namespace LehighBuses
             timer.Start();
         }
 
+        //show status bar on app bar swipe
+        private void ApplicationBar_StateChanged(object sender, ApplicationBarStateChangedEventArgs e)
+        {
+            SystemTray.Opacity = .5;
+
+            if (!e.IsMenuVisible)
+            {
+                hideTray();
+            }
+            else
+            {
+                SystemTray.IsVisible = e.IsMenuVisible;
+            }
+        }
+
         //General Setup stuff
         private void initializeProgressBar()
         {
@@ -76,10 +90,14 @@ namespace LehighBuses
         private void startProgGetData()
         {
             SystemTray.SetIsVisible(this, true);
-            SystemTray.SetOpacity(this, 0);
+            SystemTray.SetOpacity(this, .5);
             progGetData.IsVisible = true;
             SystemTray.SetProgressIndicator(this, progGetData);
         
+        }
+        private void hideTray()
+        {
+            SystemTray.SetIsVisible(this, false);
         }
         private void initializeCollections()
         {
@@ -109,7 +127,6 @@ namespace LehighBuses
         {
             if (!e.Cancelled && e.Error == null && e.Result != null)
             {
-                locationSearchTimes = 0;
                 setData(e.Result);
                 findLocation();
                 setupMap();
@@ -165,6 +182,7 @@ namespace LehighBuses
             }
             BusRoutes.ItemsSource = buses;
             progGetData.IsVisible = false;
+            hideTray();
         }
 
         //Map Stuff
@@ -310,7 +328,6 @@ namespace LehighBuses
                         var getLocation = new getLocation();
                         if (getLocation.getLat() != null && getLocation.getLat() != "NA")
                         {
-                            errorSet = false;
                             //Set long and lat
                             this.currentLat = getLocation.getLat();
                             this.currentLon = getLocation.getLong();

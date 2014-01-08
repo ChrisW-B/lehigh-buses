@@ -12,7 +12,7 @@ xmlns:maps="clr-namespace:Microsoft.Phone.Maps.Controls;assembly=Microsoft.Phone
     FontFamily="{StaticResource PhoneFontFamilyNormal}"
     FontSize="{StaticResource PhoneFontSizeNormal}"
     SupportedOrientations="Portrait" Orientation="Portrait"
-    shell:SystemTray.IsVisible="True" Background="#FF4C280F" Foreground="White" shell:SystemTray.ForegroundColor="LightGray">
+    >
 
     <Grid x:Name="LayoutRoot" Background="#FF4C280F">
         <Grid.RowDefinitions>

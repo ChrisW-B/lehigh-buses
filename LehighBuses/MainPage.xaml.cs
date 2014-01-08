@@ -31,6 +31,9 @@ namespace LehighBuses
         MapOverlay myLocationOverlay;
         MapLayer myLocationLayer;
 
+        String mapAppID = "0c0bd6ee-3d59-40a7-8b8b-e931a4bc1d98";
+        String mapAuthTok = "35pGil1f5Gcm8Va8ClFKHg";
+
         private bool isCurrent = true;
 
         public ObservableCollection<Bus> buses { get; set; }
@@ -44,10 +47,18 @@ namespace LehighBuses
         {
             InitializeComponent();
             ApplicationBar.StateChanged += ApplicationBar_StateChanged;
+            busMap.Loaded += busMap_Loaded;
             initializeCollections();
             initializeProgressBar();
             setTileColor();
         }
+
+        void busMap_Loaded(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Phone.Maps.MapsSettings.ApplicationContext.ApplicationId = mapAppID;
+            Microsoft.Phone.Maps.MapsSettings.ApplicationContext.AuthenticationToken = mapAuthTok;
+        }
+
         protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
         {
             getJson();

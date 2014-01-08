@@ -25,6 +25,9 @@ namespace LehighBuses
         MapOverlay myLocationOverlay;
         MapLayer myLocationLayer;
 
+        String mapAppID = "0c0bd6ee-3d59-40a7-8b8b-e931a4bc1d98";
+        String mapAuthTok = "35pGil1f5Gcm8Va8ClFKHg";
+
         private string currentLat;
         private string currentLon;
 
@@ -43,7 +46,14 @@ namespace LehighBuses
                 buses = store["buses"];
             }
             isCurrent = true;
+            busMap.Loaded+=busMap_Loaded;
             setupMap();
+        }
+
+        void busMap_Loaded(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Phone.Maps.MapsSettings.ApplicationContext.ApplicationId = mapAppID;
+            Microsoft.Phone.Maps.MapsSettings.ApplicationContext.AuthenticationToken = mapAuthTok;
         }
 
         //Map stuff

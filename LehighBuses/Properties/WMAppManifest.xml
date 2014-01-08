@@ -1,12 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Deployment xmlns="http://schemas.microsoft.com/windowsphone/2012/deployment" AppPlatformVersion="8.0">
   <DefaultLanguage xmlns="" code="en-US" />
-  <App xmlns="" ProductID="{eeb27ab0-afe7-4819-a0a2-7647f192454c}" Title="Lehigh Buses" RuntimeType="Silverlight" Version="1.0.0.0" Genre="apps.normal" Author="LehighBuses author" Description="Sample description" Publisher="LehighBuses" PublisherID="{d8dbc62b-4068-43b3-8e65-efc9d7168e3c}">
-    <IconPath IsRelative="true" IsResource="false">Bus.png</IconPath>
+  <App xmlns="" ProductID="{eeb27ab0-afe7-4819-a0a2-7647f192454c}" Title="Lehigh Buses" RuntimeType="Silverlight" Version="1.0.0.0" Genre="apps.normal" Author="CB_27" Description="App to view a map of Lehigh bus stops as well as the bus schedule" Publisher="LehighBuses" PublisherID="{d8dbc62b-4068-43b3-8e65-efc9d7168e3c}">
+    <IconPath IsRelative="true" IsResource="false">icon_7190.png</IconPath>
     <Capabilities>
       <Capability Name="ID_CAP_NETWORKING" />
-      <Capability Name="ID_CAP_MEDIALIB_AUDIO" />
-      <Capability Name="ID_CAP_MEDIALIB_PLAYBACK" />
       <Capability Name="ID_CAP_SENSORS" />
       <Capability Name="ID_CAP_WEBBROWSERCOMPONENT" />
       <Capability Name="ID_CAP_MAP" />

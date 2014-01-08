@@ -16,6 +16,7 @@ using System.IO.IsolatedStorage;
 using System.Windows.Shapes;
 using Microsoft.Phone.Maps.Controls;
 using System.Device.Location;
+using System.Windows.Threading;
 
 namespace LehighBuses
 {
@@ -23,9 +24,12 @@ namespace LehighBuses
     {
         #region variables
         ProgressIndicator progGetData;
-        dynamic store = IsolatedStorageSettings.ApplicationSettings;
+        IsolatedStorageSettings store = IsolatedStorageSettings.ApplicationSettings;
         private string currentLat;
         private string currentLon;
+
+        MapOverlay myLocationOverlay;
+        MapLayer myLocationLayer;
 
         private bool isCurrent = true;
         private int locationSearchTimes;
@@ -44,8 +48,21 @@ namespace LehighBuses
             initializeCollections();
             initializeProgressBar();
             setTileColor();
+        }
+        protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
+        {
             getJson();
-            
+            autoRefresh();
+        }
+        private void autoRefresh()
+        {
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Tick += delegate(object s, EventArgs args)
+            {
+                getJson();
+            };
+            timer.Interval = new TimeSpan(0, 0, 30);
+            timer.Start();
         }
 
         //General Setup stuff
@@ -93,7 +110,6 @@ namespace LehighBuses
             if (!e.Cancelled && e.Error == null && e.Result != null)
             {
                 locationSearchTimes = 0;
-
                 setData(e.Result);
                 findLocation();
                 setupMap();
@@ -163,7 +179,8 @@ namespace LehighBuses
         {
             foreach (Bus bus in buses)
             {
-                ObservableCollection<Arrival> arrivals = bus.arrivals;
+                ObservableCollection<Arrival> arrivals = new ObservableCollection<Arrival>();
+                   arrivals = bus.arrivals;
                 string name = bus.name;
                 foreach (Arrival arrival in arrivals)
                 {
@@ -172,42 +189,60 @@ namespace LehighBuses
                     plotPoint(lat, lon, name);
                 }
             }
-            addCurrentLocation();
+            setCurrentLocation();
         }
-        private void addCurrentLocation()
+        private void setCurrentLocation()
         {
+            if (store.Contains("enableLocation"))
+            {
+                if ((bool)store["enableLocation"])
+                {
+                    if (myLocationLayer != null)
+                    {
+                        busMap.Layers.Remove(myLocationLayer);
+                    }
 
-            //create a marker
-            Polygon triangle = new Polygon();
-            triangle.Fill = new SolidColorBrush(Colors.Black);
-            triangle.Points.Add((new Point(0, 0)));
-            triangle.Points.Add((new Point(0, 20)));
-            triangle.Points.Add((new Point(20, 20)));
-            triangle.Points.Add((new Point(20, 0)));
+                    //create a marker
+                    Polygon triangle = new Polygon();
+                    triangle.Fill = new SolidColorBrush(Colors.Black);
+                    triangle.Points.Add((new Point(0, 0)));
+                    triangle.Points.Add((new Point(0, 20)));
+                    triangle.Points.Add((new Point(20, 20)));
+                    triangle.Points.Add((new Point(20, 0)));
 
-            //Rotate it
-            RotateTransform rotate = new RotateTransform();
-            rotate.Angle = 45;
-            triangle.RenderTransform = rotate;
+                    //Rotate it
+                    RotateTransform rotate = new RotateTransform();
+                    rotate.Angle = 45;
+                    triangle.RenderTransform = rotate;
 
-            // Create a MapOverlay to contain the marker
-            MapOverlay myLocationOverlay = new MapOverlay();
+                    // Create a MapOverlay to contain the marker
+                    myLocationOverlay = new MapOverlay();
 
-            double lat = Convert.ToDouble(currentLat);
-            double lon = Convert.ToDouble(currentLon);
+                    double lat = Convert.ToDouble(currentLat);
+                    double lon = Convert.ToDouble(currentLon);
 
-            myLocationOverlay.Content = triangle;
-            myLocationOverlay.PositionOrigin = new Point(0, 0);
+                    myLocationOverlay.Content = triangle;
+                    myLocationOverlay.PositionOrigin = new Point(0, 0);
 
-            myLocationOverlay.GeoCoordinate = new GeoCoordinate(lat, lon);
+                    myLocationOverlay.GeoCoordinate = new GeoCoordinate(lat, lon);
 
-            // Create a MapLayer to contain the MapOverlay.
-            MapLayer myLocationLayer = new MapLayer();
-            myLocationLayer.Add(myLocationOverlay);
+                    // Create a MapLayer to contain the MapOverlay.
+                    myLocationLayer = new MapLayer();
+                    myLocationLayer.Add(myLocationOverlay);
 
-            // Add the MapLayer to the Map.
-            busMap.Layers.Add(myLocationLayer);
-        
+                    // Add the MapLayer to the Map.
+                    busMap.Layers.Add(myLocationLayer);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                store["enableLocation"] = true;
+                setCurrentLocation();
+            }
         }
         private void plotPoint(double lat, double lon, string name)
         {
@@ -265,13 +300,11 @@ namespace LehighBuses
         }
         private void findLocation()
         {
-
             if (store.Contains("enableLocation"))
             {
                 if ((bool)store["enableLocation"])
                 {
-
-                    if (isCurrent && locationSearchTimes <= 5)
+                    if (isCurrent)
                     {
                         //get location
                         var getLocation = new getLocation();
@@ -289,37 +322,27 @@ namespace LehighBuses
                         }
                         else
                         {
-                            locationSearchTimes++;
-                            findLocation();
-                        }
-                    }
-                    if (locationSearchTimes > 5)
-                    {
-                        if (store.Contains("loc"))
-                        {
-                            String[] loc = (string[])store["loc"];
-                            currentLat = loc[0];
-                            currentLon = loc[1];
+                            if (store.Contains("loc"))
+                            {
+                                String[] loc = (string[])store["loc"];
+                                currentLat = loc[0];
+                                currentLon = loc[1];
 
-                            //prevent reuse of same location
-                            store.Remove("loc");
-                        }
-                        else if (!errorSet)
-                        {
-                            errorSet = true;
-                            //errorText.Text = "Cannot get current location. Check to make sure location services are enabled";
-                        }
-                        else
-                        {
-                            currentLat = "0";
-                            currentLon = "0";
+                                //prevent reuse of same location
+                                store.Remove("loc");
+                            }
+                            else
+                            {
+                                currentLat = "40.61";
+                                currentLon = "-75.38";
+                            }
                         }
                     }
                 }
                 else
                 {
-                    errorSet = true;
-                    //errorText.Text = "Cannot get current location. Check to make sure location services are enabled";
+                    currentLat = "40.61";
+                    currentLon = "-75.38";
                 }
             }
             else
@@ -368,6 +391,11 @@ namespace LehighBuses
                 Convert.ToByte(hex.Substring(5, 2), 16),
                 Convert.ToByte(hex.Substring(7, 2), 16)
                 );
+        }
+
+        private void settings_Click(object sender, EventArgs e)
+        {
+            NavigationService.Navigate(new Uri("/SettingsPage.xaml", UriKind.Relative));
         } 
     }
 }

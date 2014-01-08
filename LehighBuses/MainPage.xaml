@@ -78,7 +78,7 @@ xmlns:maps="clr-namespace:Microsoft.Phone.Maps.Controls;assembly=Microsoft.Phone
         <shell:ApplicationBar IsVisible="True"  IsMenuEnabled="True" Mode="Default"  Opacity="0.8" >
 
             <shell:ApplicationBarIconButton IconUri="/Images/refresh.png" Text="refresh" Click="refresh_Click"/>
-
+            <shell:ApplicationBarIconButton IconUri="/Images/settings.png" Text="settings" Click="settings_Click"/>
         </shell:ApplicationBar>
     </phone:PhoneApplicationPage.ApplicationBar>
 
